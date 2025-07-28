@@ -1,0 +1,30 @@
+resource "google_saas_runtime_saas" "test_saas" {
+  provider = google-beta
+  saas_id  = "{{index $.Vars "saas_name"}}"
+  location = "global"
+
+  locations {
+    name = "us-central1"
+  }
+  locations {
+    name = "europe-west1"
+  }
+}
+
+resource "google_saas_runtime_unit_kind" "dependency" {
+  provider        = google-beta
+  unit_kind_id    = "{{index $.Vars "unit_kind_name"}}-dependency"
+  location        = "global"
+  saas            = google_saas_runtime_saas.test_saas.id
+}
+
+resource "google_saas_runtime_unit_kind" "{{$.PrimaryResourceId}}" {
+  provider        = google-beta
+  unit_kind_id    = "{{index $.Vars "unit_kind_name"}}"
+  location        = "global"
+  saas            = google_saas_runtime_saas.test_saas.id
+  dependencies {
+    alias     = "dep1"
+    unit_kind = google_saas_runtime_unit_kind.dependency.id
+  }
+}
